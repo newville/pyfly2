@@ -306,22 +306,25 @@ cdef class Camera(object):
         return (self.rawImage.cols, self.rawImage.rows)
 
 
-    def GrabWxImage(self, scale=1.00, rgb=True):
+    def GrabWxImage(self, scale=1.00, rgb=True, quality=wx.IMAGE_QUALITY_HIGH):
         """returns a wximage
         optionally specifying scale and color
         """
         errcheck(fc2RetrieveBuffer(self._context, &self.rawImage))
         ncols, nrows = self.rawImage.cols, self.rawImage.rows
-        size = ncols *nrows
+        size = ncols*nrows
+        scale = max(scale, 0.05)
+        width, height = int(scale*ncols), int(scale*nrows)
         if rgb:
             errcheck(fc2ConvertImageTo(FC2_PIXEL_FORMAT_RGB8,
                                        &self.rawImage, &self.rgbImage))
-            img = wx.ImageFromData(ncols, nrows, self.rgbImage.pData[:3*size])
+            img = wx.ImageFromData(ncols, nrows, self.rgbImage.pData[:3*size]
+                                   ).Rescale(width, height, quality=quality)
         else:
-            img = wx.ImageFromData(ncols, nrows, self.rawImage.pData[:size])
+            img = wx.ImageFromData(ncols, nrows, self.rawImage.pData[:size]
+                                   ).Rescale(width, height, quality=quality)
 
-        scale = max(scale, 0.05)
-        return img.Scale(int(scale*ncols), int(scale*nrows))
+        return img
 
     def GrabPILImage(self):
         """"""
